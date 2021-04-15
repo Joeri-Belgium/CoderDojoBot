@@ -5,7 +5,7 @@ import os
 
 
 def embeds(ctx, title, name, value):
-    em = discord.Embed(color=ctx.author.color)
+    em = discord.Embed(title=title, color=ctx.author.color)
     em.add_field(name=name, value=value)
     return em
 
@@ -18,15 +18,16 @@ client.remove_command("help")
 @client.group(invoke_without_command=True)
 async def help(ctx):
     em = discord.Embed(title="Commands", description="Typ .help <command> voor meer informatie over die command.", color=ctx.author.color)
-    em.add_field(name="**.ping**", value="Weergeeft de bots ping (vertraging van de bot).", inline=False)
-    em.add_field(name="**.<role>**", value="Status van de <role>-programmeurs. (werkt voor bepaalde roles, typ **.help role** voor een volledige lijst)", inline=False)
-    em.add_field(name="**.pypi**", value="Zoekt naar python modules op de pypi.org website", inline=False)
-    em.add_field(name="**.docs**", value="Zoekt naar documentaties op de readthedocs.org website (meestal python)", inline=False)
-    em.add_field(name="**.nuget**", value="Zoekt naar c-modules op de nuget.org website", inline=False)
-    em.add_field(name="**.github**", value="Github pagina van de source code van CoderDojo Discord bot.", inline=False)
-    em.add_field(name="**.dojos**", value="Weergeeft een lijst van alle dojo's met een privéchat.")
-    em.add_field(name="**.bug**", value="Wat moet je doen als je een bug vindt?", inline=False)
-    em.add_field(name="**.membercount**", value="Weergeeft het aantal bots en members.", inline=False)
+    em.add_field(name="**`.ping`**", value="Weergeeft de bots ping (vertraging van de bot).", inline=False)
+    em.add_field(name="**`.<role>`**", value="Status van de <role>-programmeurs. (werkt voor bepaalde roles, typ **.help role** voor een volledige lijst)", inline=False)
+    em.add_field(name="**`.pypi`**", value="Zoekt naar python modules op de pypi.org website", inline=False)
+    em.add_field(name="**`.docs`**", value="Zoekt naar documentaties op de readthedocs.org website (meestal python)", inline=False)
+    em.add_field(name="**`.nuget`**", value="Zoekt naar c-modules op de nuget.org website", inline=False)
+    em.add_field(name="**`.npm`**", value="Zoekt naar javascript-modules op de nuget.org website", inline=False)
+    em.add_field(name="**`.github`**", value="Github pagina van de source code van CoderDojo Discord bot.", inline=False)
+    em.add_field(name="**`.dojos`**", value="Weergeeft een lijst van alle dojo's met een privéchat.")
+    em.add_field(name="**`.bug`**", value="Wat moet je doen als je een bug vindt?", inline=False)
+    em.add_field(name="**`.membercount`**", value="Weergeeft het aantal bots en members.", inline=False)
     await ctx.send(embed=em)
 
 
@@ -63,15 +64,14 @@ async def member_count(ctx):
 @client.group(invoke_without_command=True)
 async def modhelp(ctx):
     embed = discord.Embed(color=ctx.author.color)
-    embed.add_field(name=".geef_ninja", value="Geeft members zonder roles de [Ninja] role.", inline=False)
-    embed.add_field(name=".1role", value="Stuurt members die 1 role hebben ([Ninja] of [Coach]) een bericht met een verwijzing naar reaction roles", inline=False)
-    embed.add_field(name=".create", value="Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role", inline=False)
+    embed.add_field(name="`.geef_ninja`", value="Geeft members zonder roles de [Ninja] role.", inline=False)
+    embed.add_field(name="`.1role`", value="Stuurt members die 1 role hebben ([Ninja] of [Coach]) een bericht met een verwijzing naar reaction roles", inline=False)
+    embed.add_field(name="`.create`", value="Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role", inline=False)
     await ctx.send(embed=embed)
 
 @modhelp.command()
 async def create(ctx):
     embed = embeds(ctx, None, ".create <naam dojo>", "Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role")
-    await ctx.send(embed=embed)
 
 @client.event
 async def on_command_error(ctx, error):
