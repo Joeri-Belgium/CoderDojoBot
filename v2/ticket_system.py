@@ -58,7 +58,13 @@ async def close(ctx):
         await msg.add_reaction("📜")
         await client.wait_for("raw_reaction_add", check=check)
         if emoji == "🔓":
-            await channel.edit(category=category_open, overwrites=overwrites_create)
+            new_overwrites = overwrites_create.copy()
+            ticket_members = [k for k in channel.overwrites if isinstance(k, discord.Member)]
+            if len(ticket_members) >= 2:
+                for n, tkmember in enumerate(ticket_members):
+                    if n != 0:
+                        new_overwrites[tkmember] = discord.PermissionOverwrite(view_channel=True)
+            await channel.edit(category=category_open, overwrites=new_overwrites)
             await ctx.message.delete()
             await msg.delete()
         elif emoji == "📜":
@@ -86,8 +92,9 @@ async def add(ctx, member: discord.Member):
     guild = ctx.guild
     category_open = discord.utils.get(guild.categories, id=790237644482674688)
     if ctx.channel in category_open.channels:
-        overwrites_create[member] = discord.PermissionOverwrite(view_channel=True)
-        await ctx.channel.edit(overwrites=overwrites_create)
+        new_overwrites = ctx.channel.overwrites
+        new_overwrites[member] = discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_channels=False)
+        await ctx.channel.edit(overwrites=new_overwrites)
         await ctx.send(embed=discord.Embed(color=member.color, title=None, description=f"{member.mention} is toegevoegd aan {ctx.channel.mention}"))
         
         
@@ -96,8 +103,9 @@ async def remove(ctx, member: discord.Member):
     guild = ctx.guild
     category_open = discord.utils.get(guild.categories, id=790237644482674688)
     if ctx.channel in category_open.channels:
-        overwrites_create[member] = discord.PermissionOverwrite(view_channel=False)
-        await ctx.channel.edit(overwrites=overwrites_create)
+        new_overwrites = ctx.channel.overwrites
+        new_overwrites[member] = discord.PermissionOverwrite(view_channel=False, send_messages=False)
+        await ctx.channel.edit(overwrites=new_overwrites)
         await ctx.send(embed=discord.Embed(color=member.color, title=None, description=f"{member.mention} is verwijdert uit {ctx.channel.mention}"))
         
         
