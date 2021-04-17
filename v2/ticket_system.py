@@ -22,8 +22,8 @@ async def on_raw_reaction_add(payload):
             mod : discord.PermissionOverwrite(view_channel=True),
             payload.member: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
-        channel = await category_open.create_text_channel(f"{payload.member.name}-ticket", overwrites=overwrites_create)
-        await channel.send(content=payload.member.mention, embed=discord.Embed(color=payload.member.color, title=None, description="Hier kun je jouw probleem uitleggen. Geef zoveel mogelijk informatie en verwoord dit zo duidelijk mogelijk, op die manier kan je nog sneller geholpen worden.\nOm het ticket te sluiten, kan je het `.sluit` commando uitvoeren."))
+        channel = await category_open.create_text_channel(f"{payload.member.display_name.split(' [')[0]}-ticket", overwrites=overwrites_create)
+        await channel.send(content=payload.member.mention, embed=discord.Embed(color=payload.member.color, description="Hier kun je jouw probleem uitleggen. Geef zoveel mogelijk informatie en verwoord dit zo duidelijk mogelijk, op die manier kan je nog sneller geholpen worden.\nOm het ticket te sluiten, kan je het `.sluit` commando uitvoeren."))
 
 
 @client.command(aliases=["sluit"])
