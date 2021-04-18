@@ -4,7 +4,7 @@ from keep_alive import keep_alive
 import os
 
 async def lijst_online_members(ctx, naam_role):
-    lijst_role = [member for member in ctx.guild.members if naam_role in [role for role in member.roles]]
+    lijst_role = [member for member in ctx.guild.members if naam_role in [role.name for role in member.roles]]
     lijst_online = [member.display_name for member in lijst_role if str(member.status) != "offline"]
     lijst_offline = [member.display_name for member in lijst_role if str(member.status) == "offline"]
     if not lijst_online:
@@ -21,16 +21,6 @@ async def lijst_online_members(ctx, naam_role):
         em = embeds(ctx, None, f"{naam_role}", f"**Online ({len(lijst_online)}):** {members_online}\n**Offline ({len(lijst_offline)}):** {members_offline}")
     await ctx.send(embed=em)
 
-
-def embeds(ctx, title, name, value):
-    em = discord.Embed(title=title, color=ctx.author.color)
-    em.add_field(name=name, value=value)
-    return em
-
-
-intents = discord.Intents(messages=True, guilds=True, reactions=True, members=True, presences=True, bans=True)
-client = commands.Bot(command_prefix=".", intents=intents, help=None)
-client.remove_command("help")
 
 def embeds(ctx, title, name, value):
     em = discord.Embed(color=ctx.author.color)
