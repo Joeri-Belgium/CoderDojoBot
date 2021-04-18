@@ -4,9 +4,10 @@ import asyncio
 import os
 from keep_alive import keep_alive
 
-intents = discord.Intents(messages=True, guilds=True, reactions=True, members=True, presences=True, bans=True)
+intents = discord.Intents.all()
 client = commands.Bot(command_prefix=".", intents=intents, help=None)
 client.remove_command("help")
+
 
 @client.event
 async def on_raw_reaction_add(payload):
@@ -108,11 +109,25 @@ async def remove(ctx, member: discord.Member):
         await ctx.channel.edit(overwrites=new_overwrites)
         await ctx.send(embed=discord.Embed(color=member.color, title=None, description=f"{member.mention} is verwijdert uit {ctx.channel.mention}"))
         
+
+
+@client.command(aliases=["hernoem"])
+async def rename(ctx, *, channel_naam):
+    guild = ctx.guild
+    category_open = discord.utils.get(guild.categories, id=790237644482674688)
+    if ctx.channel in category_open.channels:
+        if ("manage_channels", True) in ctx.author.permissions_in(ctx.channel):
+            oude_naam = ctx.channel.name
+            await ctx.channel.edit(name=str(channel_naam))
+            await ctx.send(embed=discord.Embed(description=f"Kanaalnaam is verandert van {oude_naam} naar {channel_naam}"))
+
+
         
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
         pass
+
 
 keep_alive()
 client.run(os.environ['token'])
