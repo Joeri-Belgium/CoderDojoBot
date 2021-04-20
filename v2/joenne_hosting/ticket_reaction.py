@@ -172,13 +172,13 @@ async def remove(ctx, member: discord.Member):
 
 @client.command(aliases=["hernoem"])
 async def rename(ctx, *, channel_naam: str):
-    channel_naam = channel_naam.lower()
+    channel_naam = str(channel_naam.lower()[:100])
     guild = ctx.guild
     category_open = discord.utils.get(guild.categories, id=790237644482674688)
     if ctx.channel in category_open.channels:
         if ("manage_channels", True) in ctx.author.permissions_in(ctx.channel):
             oude_naam = ctx.channel.name
-            await ctx.channel.edit(name=str(channel_naam))
+            await ctx.channel.edit(name=channel_naam)
             await ctx.send(embed=discord.Embed(description=f"Kanaalnaam is verandert van {oude_naam} naar {channel_naam}"))
             
             
@@ -213,6 +213,6 @@ async def on_raw_reaction_remove(payload):
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-        pass            
+        pass          
 
 client.run("token")
