@@ -472,4 +472,4 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.errors.CommandNotFound):
         pass            
 
-client.run("ODA4NzM2NTY2MjEzMzQ1Mjgx.YCK4ng.yqnNXYBGjE_3oTTdwIAMEEMumkc")
+client.run("token")
