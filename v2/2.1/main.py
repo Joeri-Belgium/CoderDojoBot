@@ -41,13 +41,15 @@ class TicketSystem(commands.Cog):
         category_open = discord.utils.get(guild.categories, id=790237644482674688)
         if ctx.channel in category_open.channels:
             def check_reaction_on_close_msg(payload):
-                global emoji
-                emoji = payload.emoji.name
-                return payload.message_id == msg.id and payload.user_id != 808736566213345281
+                if payload.message_id == msg.id and payload.user_id != 808736566213345281:
+                    global emoji
+                    emoji = payload.emoji.name
+                return True
             def check_reaction_delete_reopen(payload):
-                global emoji
-                emoji = payload.emoji.name
-                return payload.message_id == msg.id and payload.user_id != 808736566213345281 and (emoji == "⛔" or emoji == "🔓")
+                if payload.message_id == msg.id and payload.user_id != 808736566213345281 and (emoji == "⛔" or emoji == "🔓"):
+                    global emoji
+                    emoji = payload.emoji.name
+                    return True
 
             mod = discord.utils.get(guild.roles, name="[Moderator]")
             members = [i for i in channel.overwrites if isinstance(i, discord.Member)]
