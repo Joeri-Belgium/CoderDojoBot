@@ -501,11 +501,95 @@ async def on_command_error(ctx, error):
             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
     elif isinstance(error, commands.errors.CommandNotFound):
         pass
+    
+    
+class SleepingChannels(commands.Cog):
+    def __init__(self, bot):
+        self.client = bot
+
+    @commands.command(aliases=["wakkerworden"])
+    async def wakkermaken(self, ctx):
+        def check_nummer(msg):
+            global nummer
+            try:
+                nummer = int(msg.content)
+            except:
+                pass
+            return msg.author == ctx.author and msg.channel == ctx.channel and int(msg.content) in nummers
+        
+        category_afk = discord.utils.get(ctx.guild.categories, id=835425695483166730)
+        channels_message = [f"{n + 1}: {channel.mention}" for n, channel in enumerate(category_afk.channels)]
+        nummers = list(range(1, len(channels_message) + 1))
+        
+        embed = discord.Embed(title="Slapende kanalen:", description="\n".join(channels_message), color=ctx.author.color)
+        embed.set_footer(text="Typ het overeenkomende nummer om het kanaal wakker te maken.")
+        
+        await ctx.send(embed=embed)
+        await self.client.wait_for("message", check=check_nummer, timeout=60)
+        
+        channel_to_move = category_afk.channels[nummer - 1]        
+        
+        ninja = discord.utils.get(ctx.guild.roles, id=790285278858182686)
+        coach = discord.utils.get(ctx.guild.roles, id=790284978365661245)
+        
+        overwrites = {
+            ninja: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+            coach: discord.PermissionOverwrite(view_channel=True, send_messages=True),
+            ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False)
+        }
+        new_category = discord.utils.get(ctx.guild.categories, id=788428553339011125)
+        await channel_to_move.edit(overwrites=overwrites, category=new_category, position=self.client.get_channel(790215104825262111).position)
+        
+        await ctx.send(embed=discord.Embed(description=f"{channel_to_move.mention} is wakker geworden 🥱."))
+        last_message = await channel_to_move.fetch_message(channel_to_move.last_message_id)
+        await last_message.delete()
+
+
+
+    @commands.command(aliases=["slaap"])
+    @commands.has_permissions(administrator=True)
+    async def sleep(self, ctx):
+        def check_sleep(payload):
+            global emoji
+            emoji = payload.emoji.name
+            return payload.member == ctx.author and payload.emoji.name in ("❎", "✅")
+        
+        category_awake = discord.utils.get(ctx.guild.categories, id=788428553339011125)
+        category_afk = discord.utils.get(ctx.guild.categories, id=835425695483166730)
+        
+        if ctx.channel.category == category_awake:
+            embed = discord.Embed(description=f"Wil je {ctx.channel.mention} doen slapen?")
+            embed.set_footer(text="✅ = ja, ❎ = nee")
+            message = await ctx.send(embed=embed)
+            await message.add_reaction("✅")
+            await message.add_reaction("❎")
+            await self.client.wait_for("raw_reaction_add", check=check_sleep, timeout=60)
+            if emoji == "✅":
+                
+                ninja = discord.utils.get(ctx.guild.roles, id=790285278858182686)
+                coach = discord.utils.get(ctx.guild.roles, id=790284978365661245)
+                
+                overwrites = {
+                    ninja: discord.PermissionOverwrite(view_channel=True, send_messages=False),
+                    coach: discord.PermissionOverwrite(view_channel=True, send_messages=False),
+                    ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False)
+                }
+                await ctx.channel.edit(category=category_afk, overwrites=overwrites)
+                await ctx.message.delete()
+                await message.delete()
+                await ctx.send(embed=discord.Embed(description=f"{ctx.channel.mention} is gesloten wegens inactiviteit, als je dit kanaal wil open typ in {self.client.get_channel(790215104825262111).mention} **`.wakkerworden`**, dan krijg je een lijst te zien van kanalen die ook aan het \"slapen\" zijn, typ het overeenkomende nummer en dit kanaal zal weer heropened worden!"))
+            else:
+                message_annulatie = await ctx.send(embed=discord.Embed(description=f"{ctx.channel.mention} wordt niet verplaatst (dit bericht wordt binnen 10 seconden verwijderd)"))
+                await asyncio.sleep(10)
+                await ctx.message.delete()
+                await message.delete()
+                await message_annulatie.delete()
 
 client.add_cog(TicketSystem(client))
 client.add_cog(ReactionRoles(client))
 client.add_cog(MainCommands(client))
 client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
+client.add_cog(SleepingChannels(client))
 
 client.run("token")
