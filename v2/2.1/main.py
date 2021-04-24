@@ -489,18 +489,6 @@ class Comms(commands.Cog):
                 await self.client.wait_for("voice_state_update", check=check)
                 await channel.delete()
 
-
-@client.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandOnCooldown):
-        seconden = error.retry_after % 60
-        minuten = (error.retry_after - seconden) / 60
-        if minuten == 0:
-            await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
-        else:
-            await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
-    elif isinstance(error, commands.errors.CommandNotFound):
-        pass
     
     
 class SleepingChannels(commands.Cog):
@@ -584,6 +572,20 @@ class SleepingChannels(commands.Cog):
                 await ctx.message.delete()
                 await message.delete()
                 await message_annulatie.delete()
+                 
+ 
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.CommandOnCooldown):
+        seconden = error.retry_after % 60
+        minuten = (error.retry_after - seconden) / 60
+        if minuten == 0:
+            await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
+        else:
+            await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
+    else:
+        pass
+
 
 client.add_cog(TicketSystem(client))
 client.add_cog(ReactionRoles(client))
