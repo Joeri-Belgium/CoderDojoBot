@@ -46,7 +46,7 @@ class TicketSystem(commands.Cog):
                     emoji = payload.emoji.name
                 return True
             def check_reaction_delete_reopen(payload):
-                if payload.message_id == msg.id and payload.user_id != 808736566213345281 and (emoji == "⛔" or emoji == "🔓"):
+                if payload.message_id == msg.id and payload.user_id != 808736566213345281 and payload.emoji.name in ("🔓", "⛔"):
                     global emoji
                     emoji = payload.emoji.name
                     return True
@@ -576,17 +576,17 @@ class SleepingChannels(commands.Cog):
                 await message_annulatie.delete()
                  
  
-@client.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandOnCooldown):
-        seconden = error.retry_after % 60
-        minuten = (error.retry_after - seconden) / 60
-        if minuten == 0:
-            await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
-        else:
-            await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
-    else:
-        pass
+# @client.event
+# async def on_command_error(ctx, error):
+#     if isinstance(error, commands.errors.CommandOnCooldown):
+#         seconden = error.retry_after % 60
+#         minuten = (error.retry_after - seconden) / 60
+#         if minuten == 0:
+#             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
+#         else:
+#             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
+#     else:
+#         pass
 
 
 client.add_cog(TicketSystem(client))
@@ -596,4 +596,4 @@ client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
 client.add_cog(SleepingChannels(client))
 
-client.run("token")
+client.run("ODA4NzM2NTY2MjEzMzQ1Mjgx.YCK4ng.qcIwhuqd79utj49RPk4MxVL8Uyc")
