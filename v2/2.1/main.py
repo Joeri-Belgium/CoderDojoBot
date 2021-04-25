@@ -7,10 +7,11 @@ intents = discord.Intents.all()
 client = commands.Bot(command_prefix=".", intents=intents)
 client.remove_command("help")
 
+
 @client.event
 async def on_ready():
     print(f"{client.user.name} is running...")
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=".help"))
+    discord.Activity(type=discord.ActivityType.watching, name=".help")
 
 
 class TicketSystem(commands.Cog):
@@ -446,12 +447,18 @@ class AndereCommands(commands.Cog):
     @commands.command()
     async def sessie(self, ctx):
         role_names = [role.name for role in ctx.author.roles]
-        if "[Admin]" in role_names or "[Moderator]" in role_names:
+        if "[Moderator]" in role_names:
+            async def reactie_verwijderen(payload):
+                await msg.remove_reaction(payload.emoji, payload.member)
+            
             def check1(m):
                 return m.channel == ctx.channel and m.author == ctx.author
+            
             def check2(payload):
                 if msg.id == payload.message_id and payload.user_id != 808736566213345281 and "[Moderator]" in role_names and payload.emoji.name == "🛑":
                     return True
+                else:
+                    self.client.loop.create_task(reactie_verwijderen(payload))
             await ctx.send("Wat is de naam van je sessie?")
             sessie_naam = await self.client.wait_for('message', check=check1, timeout=180)
             await ctx.send("Wanneer gaat de sessie door?")
@@ -630,7 +637,7 @@ async def on_command_error(ctx, error):
 client.add_cog(TicketSystem(client))
 client.add_cog(ReactionRoles(client))
 client.add_cog(MainCommands(client))
-client.add_cog(AndereCommands(client))
+# client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
 client.add_cog(SleepingChannels(client))
 
