@@ -13,10 +13,6 @@ async def on_ready():
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=".help"))
 
 
-class TicketSystem(commands.Cog):
-    def __init__(self, bot):
-        self.client = bot
-    
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.message_id == 832221302769057822:
@@ -39,16 +35,57 @@ class TicketSystem(commands.Cog):
         channel = ctx.channel
         guild = ctx.guild
         category_open = discord.utils.get(guild.categories, id=790237644482674688)
+        
         if ctx.channel in category_open.channels:
+            
+            async def closing_functions(emoji):
+                if emoji == "🔓":
+                    
+                    new_overwrites = msg.channel.overwrites
+                    ticket_members = [k for k in channel.overwrites if isinstance(k, discord.Member)]
+                    
+                    if len(ticket_members) >= 2:
+                        for ticket_member in ticket_members:
+                            if ("external_emojis", False) not in msg.author.permissions_in(msg.channel):
+                                new_overwrites[ticket_member] = discord.PermissionOverwrite(view_channel=True)
+                    
+                    await channel.edit(category=category_open, overwrites=new_overwrites)
+                    await ctx.message.delete()
+                    await msg.delete()
+                
+                elif emoji == "📜":
+                    with open(f"{channel.id}.txt", "w", encoding="utf+8") as f:
+                        async for i in channel.history(limit=None, oldest_first=True):
+                            f.write(f"\n{i.author.name}: {i.content}")
+                    
+                    await channel.send(file=discord.File(f"{channel.id}.txt"))
+                    os.remove(f"{channel.id}.txt")
+                    await self.client.wait_for("raw_reaction_add", check=check_reaction_delete_reopen)
+                
+                elif emoji == "⛔":
+                    await channel.send(embed=discord.Embed(color=discord.Colour.dark_blue(), description=f"{channel.mention} wordt verwijderd binnen 5 seconden!"))
+                    await asyncio.sleep(5)
+                    await channel.delete()
+                    
+            async def functions_after_txt(emoji):
+                if emoji == "⛔":
+                    await channel.send(embed=discord.Embed(color=discord.Colour.dark_blue(), description=f"{channel.mention} wordt verwijdert binnen 5 seconden!"))
+                    await asyncio.sleep(5)
+                    await channel.delete()
+                
+                elif emoji == "🔓":
+                    await channel.edit(category=category_open, overwrites=channel.overwrites)
+                    await ctx.message.delete()
+                    await msg.delete()
+            
             def check_reaction_on_close_msg(payload):
                 if payload.message_id == msg.id and payload.user_id != 808736566213345281:
-                    global emoji
-                    emoji = payload.emoji.name
-                return True
+                    client.loop.create_task(closing_functions(payload.emoji.name))
+                    return True
+            
             def check_reaction_delete_reopen(payload):
                 if payload.message_id == msg.id and payload.user_id != 808736566213345281 and payload.emoji.name in ("🔓", "⛔"):
-                    global emoji
-                    emoji = payload.emoji.name
+                    client.loop.create_task(functions_after_txt(payload.emoji.name))
                     return True
 
             mod = discord.utils.get(guild.roles, name="[Moderator]")
@@ -59,43 +96,17 @@ class TicketSystem(commands.Cog):
             }
             for member in members:           
                 overwrites[member] = discord.PermissionOverwrite(view_channel=False)
+            
             category_closed = discord.utils.get(guild.categories, id=790237755049115669)
             await channel.edit(category=category_closed , overwrites=overwrites)
             embed = discord.Embed(description="\⛔ : Verwijder dit ticket\n\🔓: Heropen dit ticket\n\📜: Maak een transcript (`.txt` bestand) van dit ticket")
             msg = await ctx.send(embed=embed)
+            
             await msg.add_reaction("⛔")
             await msg.add_reaction("🔓")
             await msg.add_reaction("📜")
+            
             await self.client.wait_for("raw_reaction_add", check=check_reaction_on_close_msg)
-            if emoji == "🔓":
-                new_overwrites = msg.channel.overwrites
-                ticket_members = [k for k in channel.overwrites if isinstance(k, discord.Member)]
-                if len(ticket_members) >= 2:
-                    for tkmember in ticket_members:
-                        if ("external_emojis", False) not in msg.author.permissions_in(msg.channel):
-                            new_overwrites[tkmember] = discord.PermissionOverwrite(view_channel=True)
-                await channel.edit(category=category_open, overwrites=new_overwrites)
-                await ctx.message.delete()
-                await msg.delete()
-            elif emoji == "📜":
-                with open(f"{channel.id}.txt", "w", encoding="utf+8") as f:
-                    async for i in channel.history(limit=None, oldest_first=True):
-                        f.write(f"\n{i.author.name}: {i.content}")
-                await channel.send(file=discord.File(f"{channel.id}.txt"))
-                os.remove(f"{channel.id}.txt")
-                await self.client.wait_for("raw_reaction_add", check=check_reaction_delete_reopen)
-                if emoji == "⛔":
-                    await channel.send(embed=discord.Embed(color=discord.Colour.dark_blue(), description=f"{channel.mention} wordt verwijdert binnen 5 seconden!"))
-                    await asyncio.sleep(5)
-                    await channel.delete()
-                elif emoji == "🔓":
-                    await channel.edit(category=category_open, overwrites=channel.overwrites)
-                    await ctx.message.delete()
-                    await msg.delete()
-            elif emoji == "⛔":
-                await channel.send(embed=discord.Embed(color=discord.Colour.dark_blue(), description=f"{channel.mention} wordt verwijderd binnen 5 seconden!"))
-                await asyncio.sleep(5)
-                await channel.delete()
                 
     @commands.command()
     async def add(self, ctx, member: discord.Member):
