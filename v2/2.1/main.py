@@ -13,6 +13,10 @@ async def on_ready():
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=".help"))
 
 
+class TicketSystem(commands.Cog):
+    def __init__(self, bot):
+        self.client = bot
+    
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.message_id == 832221302769057822:
@@ -80,12 +84,12 @@ async def on_ready():
             
             def check_reaction_on_close_msg(payload):
                 if payload.message_id == msg.id and payload.user_id != 808736566213345281:
-                    client.loop.create_task(closing_functions(payload.emoji.name))
+                    self.client.loop.create_task(closing_functions(payload.emoji.name))
                     return True
             
             def check_reaction_delete_reopen(payload):
                 if payload.message_id == msg.id and payload.user_id != 808736566213345281 and payload.emoji.name in ("🔓", "⛔"):
-                    client.loop.create_task(functions_after_txt(payload.emoji.name))
+                    self.client.loop.create_task(functions_after_txt(payload.emoji.name))
                     return True
 
             mod = discord.utils.get(guild.roles, name="[Moderator]")
