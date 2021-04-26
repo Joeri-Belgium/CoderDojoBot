@@ -49,10 +49,8 @@ class TicketSystem(commands.Cog):
                     new_overwrites = msg.channel.overwrites
                     ticket_members = [k for k in channel.overwrites if isinstance(k, discord.Member)]
                     
-                    if len(ticket_members) >= 2:
-                        for ticket_member in ticket_members:
-                            if ("external_emojis", False) not in msg.author.permissions_in(msg.channel):
-                                new_overwrites[ticket_member] = discord.PermissionOverwrite(view_channel=True)
+                    for ticket_member in ticket_members:
+                        new_overwrites[ticket_member] = discord.PermissionOverwrite(view_channel=True)
                     
                     await channel.edit(category=category_open, overwrites=new_overwrites)
                     await ctx.message.delete()
