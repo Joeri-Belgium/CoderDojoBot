@@ -118,7 +118,7 @@ class TicketSystem(commands.Cog):
         category_open = discord.utils.get(guild.categories, id=790237644482674688)
         if ctx.channel in category_open.channels:
             await ctx.channel.set_permissions(member, read_messages=True, send_messages=True, view_channel=True)
-            await ctx.send(embed=discord.Embed(color=member.color, title=None, description=f"{member.mention} is toegevoegd aan {ctx.channel.mention}"))
+            await ctx.send(embed=discord.Embed(color=member.color, description=f"{member.mention} is toegevoegd aan {ctx.channel.mention}"))
             
             
     @commands.command()
@@ -127,7 +127,7 @@ class TicketSystem(commands.Cog):
         category_open = discord.utils.get(guild.categories, id=790237644482674688)
         if ctx.channel in category_open.channels:
             await ctx.channel.set_permissions(member, overwrite=None)
-            await ctx.send(embed=discord.Embed(color=member.color, title=None, description=f"{member.mention} is verwijderd uit {ctx.channel.mention}"))
+            await ctx.send(embed=discord.Embed(color=member.color, description=f"{member.mention} is verwijderd uit {ctx.channel.mention}"))
             
 
 
@@ -530,8 +530,75 @@ class Comms(commands.Cog):
                 await self.client.wait_for("voice_state_update", check=check)
                 await channel.delete()
 
-    
-    
+
+
+class HelpCommand(commands.Cog):
+    def __init__(self, bot):
+        self.client = bot
+
+    @commands.group(invoke_without_command=True)
+    async def help(self, ctx):
+        em = discord.Embed(title="Commands", description="Typ .help <command> voor meer informatie over die command.", color=ctx.author.color)
+        em.add_field(name="**`.ping`**", value="Geeft de bots ping weer (vertraging van de bot).", inline=False)
+        em.add_field(name="**`.<role>`**", value="Status van de <role>-programmeurs. (werkt voor bepaalde roles, typ **.help role** voor een volledige lijst)", inline=False)
+        em.add_field(name="**`.sessie`**", value=f"Maakt een sessie aan in {client.get_channel(832263662566637640).mention}, enkel voor moderators en admins.")
+        em.add_field(name="**`.pypi`, `.nuget`,`.npm`**", value="Zoekt naar packages op de toebehorende websites en geeft wat informatie weer over de zoekopdracht.\n`.pypi`: python, `nuget`: C , `.npm`: javascript", inline=False)
+        em.add_field(name="**`.docs`**", value="Zoekt naar documentaties op de readthedocs.org website (meestal python)", inline=False)
+        em.add_field(name="**`.github`**", value="Github pagina van de source code van CoderDojo Discord bot.", inline=False)
+        em.add_field(name="**`.dojos`**", value="Weergeeft een lijst van alle dojo's met een privéchat, je kan je bij zo een dojo aansluiten door `.dojo <naam_dojo>` te typen (bv. `.dojo Leuven`).")
+        em.add_field(name="**`.inschrijven`**", value="Geeft een lijst van toekomstige dojo's met directe linken om je in te schrijven weer.", inline=False)
+        em.add_field(name="**`.wakkerworden`**", value="Geeft een lijst van kanalen in slaapmodus weer, door het overeenkomende nummer te typen (die je te zien krijgt als je dit command oproept) open je het overeenkomende kanaal.")
+        em.add_field(name="**`.bug`**", value="Wat moet je doen als je een bug vindt?", inline=False)
+        em.add_field(name="**`.membercount`**", value="Geeft het aantal bots en members weer.", inline=False)
+        await ctx.send(embed=em)
+
+
+    @help.command()
+    async def role(self, ctx):
+        em = embeds(ctx, "Role", "Weergeeft online en offline members van een bepaalde role")
+        em.add_field(name="Mogelijke rollen", value="python (py), scratch, webdesigner (web), java-dev (java), 3D-Modelers (3D), maker, game-dev (game), c (++) (#), modontrail (mod-), moderator (mod), coach, ninja", inline=False)
+        await ctx.send(embed=em)
+        
+    @help.command()
+    async def bug(self, ctx):
+        em = embeds(ctx, "Bug", "Wat moet je doen als je een bug vindt?")
+        await ctx.send(embed=em)
+        
+        
+    @help.command()
+    async def github(self, ctx):
+        em = embeds(ctx, "Github", "Github pagina van de source code van CoderDojo Discord bot.")
+        await ctx.send(embed=em)
+
+
+    @help.command(aliases=["latencie", "vertraging", "delay", "latency"])
+    async def ping(self, ctx):
+        em = embeds(ctx, "Ping", "Weergeeft de bots ping (vertraging van de bot).")
+        em.add_field(name="Aliassen", value=".ping, .latencie, .vertraging, .delay, .latency", inline=False)
+        await ctx.send(embed=em)
+        
+    @help.command(aliases=["members", "membercount", "member"])
+    async def member_count(self, ctx):
+        em = embeds(ctx, "Membercount", "Weergeeft het aantal bots en members.")
+        em.add_field(name="Aliassen", value=".member_count, .membercount, .members, .member", inline=False)
+        await ctx.send(embed=em)
+
+    @commands.group(invoke_without_command=True)
+    async def modhelp(self, ctx):
+        embed = discord.Embed(color=ctx.author.color)
+        embed.add_field(name="`.geef_ninja`", value="Geeft members zonder roles de [Ninja] role.", inline=False)
+        embed.add_field(name="`.1role`", value="Stuurt members die 1 role hebben ([Ninja] of [Coach]) een bericht met een verwijzing naar reaction roles", inline=False)
+        embed.add_field(name="`.create`", value="Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role", inline=False)
+        embed.add_field(name="`.slaap`", value="Het kanaal waarin het commando wordt opgeroepen gaat in slaapmodus, het kanaal wordt verplaatst naar [SLAPENDE KANALEN], zodat er geen berichten meer kunnen verzonden worden.")
+        await ctx.send(embed=embed)
+
+    @modhelp.command()
+    async def create(self, ctx):
+        embed = embeds(ctx, ".create <naam dojo>", "Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role")
+        await ctx.send(embed=embed)
+
+
+
 class SleepingChannels(commands.Cog):
     def __init__(self, bot):
         self.client = bot
@@ -640,9 +707,9 @@ class SleepingChannels(commands.Cog):
 
 @client.event
 async def on_command_error(ctx, error):
-     if isinstance(error, commands.errors.CommandOnCooldown):
+    if isinstance(error, commands.errors.CommandOnCooldown):
         seconden = error.retry_after % 60
-         minuten = (error.retry_after - seconden) / 60
+        minuten = (error.retry_after - seconden) / 60
         if minuten == 0:
              await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
         else:
@@ -656,6 +723,7 @@ client.add_cog(ReactionRoles(client))
 client.add_cog(MainCommands(client))
 client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
+client.add_cog(HelpCommand(client))
 client.add_cog(SleepingChannels(client))
 
 client.run("token")
