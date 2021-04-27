@@ -228,7 +228,7 @@ class ReactionRoles(commands.Cog):
         elif payload.message_id == 830123341474037790:
             await self.role_verwijderen(payload, self.roles_os)
         elif payload.message_id == 830127528580612107:
-            role = discord.utils.get(self.client.get_guild(payload.guild_id), id=790285278858182686)
+            role = discord.utils.get(self.client.get_guild(payload.guild_id).roles, id=790285278858182686)
             await member.remove_roles(role)
 
 
@@ -368,14 +368,14 @@ class AndereCommands(commands.Cog):
     def __init__(self, bot):
         self.client = bot
     
-    async def role_controle(self, ctx, role_naam):
-        role = discord.utils.get(ctx.guild.roles, name=role_naam)
-        if role in ctx.author.roles:
-            embed = discord.Embed(color=ctx.author.color, description=f"{role_naam} rol is verwijderd.")
-            await ctx.author.remove_roles(role)
+    async def role_controle(self, ctx, user, role_naam):
+        role = discord.utils.get(ctx.guild.roles, name=f"[Dojo {role_naam}]")
+        if role in user.roles:
+            embed = discord.Embed(color=user.color, description=f"{role_naam} rol is verwijderd.")
+            await user.remove_roles(role)
         else:
-            embed = discord.Embed(color=ctx.author.color, description=f"{role_naam} rol is toegevoegd.")
-            await ctx.author.add_roles(role)
+            embed = discord.Embed(color=user.color, description=f"{role_naam} rol is toegevoegd.")
+            await user.add_roles(role)
         await ctx.send(embed=embed)
     
         
@@ -404,13 +404,20 @@ class AndereCommands(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def dojo(self, ctx, role_naam):
+    async def dojo(self, ctx, role_naam, *,user: discord.Member = None):
+        member = user or ctx.author
         role_naam = role_naam.capitalize()
         roles_dojos = [role.name for role in ctx.guild.roles[1:] if role.name.startswith("[Dojo")]
-        for role in roles_dojos:
-            if role_naam in role:
-                await self.role_controle(ctx, role)
-                break
+        if "[Coach]" in [role.name for role in ctx.author.roles] or "[Moderator]" in [role.name for role in ctx.author.roles]:
+            for role in roles_dojos:
+                if role_naam in role:
+                    await self.role_controle(ctx, member, role_naam)
+                    break
+        else:
+            for role in roles_dojos:
+                if role_naam in role:
+                    await self.role_controle(ctx, ctx.author, role_naam)
+                    break
     
     @commands.command(aliases=["eenroles", "1role"])
     @commands.has_permissions(administrator=True)
@@ -726,4 +733,4 @@ client.add_cog(Comms(client))
 client.add_cog(HelpCommand(client))
 client.add_cog(SleepingChannels(client))
 
-client.run("token")
+client.run("ODA4NzM2NTY2MjEzMzQ1Mjgx.YCK4ng.Z4amHN7XqA4lEqZBjI7AfZn7d-0")
