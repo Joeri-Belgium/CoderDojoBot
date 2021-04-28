@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from bs4 import BeautifulSoup
 from packages import packages
+import random
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix=".", intents=intents)
@@ -472,47 +473,88 @@ class AndereCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @commands.command()
+    @commands.has_role(788449231806791740) # moderator role
     async def sessie(self, ctx):
-        role_names = [role.name for role in ctx.author.roles]
-        if "[Moderator]" in role_names:
-            async def reactie_verwijderen(payload):
+        async def reactie_verwijderen(payload):
+            await msg.remove_reaction(payload.emoji, payload.member)
+            
+        def check1(m):
+            return m.channel == ctx.channel and m.author == ctx.author
+            
+        await ctx.send("Wat is de naam van je sessie?")
+        sessie_naam = await self.client.wait_for('message', check=check1, timeout=180)
+        await ctx.send("Wanneer gaat de sessie door?")
+        sessie_datum = await self.client.wait_for('message', check=check1, timeout=180)
+        await ctx.send("Een kleine beschrijving van de sessie:")
+        sessie_beschrijving = await self.client.wait_for('message', check=check1, timeout=600)
+        embed = discord.Embed(title=sessie_naam.content, color=discord.Colour.blurple())
+        embed.add_field(name="Datum", value=f"`{sessie_datum.content}`")
+        embed.add_field(name="Beschrijving:", value=f"```{sessie_beschrijving.content}```", inline=False)
+        embed.set_footer(text="Druk op '✅' om mee te doen met de sessie")
+        msg = await self.client.get_channel(832263662566637640).send(embed=embed)
+        await msg.add_reaction("✅")
+        await msg.add_reaction("🛑")
+        perms = discord.Permissions(3264065)
+        role = await ctx.guild.create_role(name=sessie_naam.content, permissions=perms, colour=discord.Color.from_rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), hoist=False, mentionable=True)
+        category = discord.utils.get(ctx.guild.categories, id=836860552805482557)
+        overwrites = {
+            role: discord.PermissionOverwrite(view_channel=True),
+            ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False)
+        }
+        await ctx.guild.create_text_channel(name=sessie_naam.content, overwrites=overwrites, category=category)
+    
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        if payload.channel_id == 832263662566637640 and payload.emoji.name == "🛑":
+            mod = discord.utils.get(self.client.get_guild(payload.guild_id).roles, id=788449231806791740)
+            if mod in payload.member.roles:
+                msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
+                embed = [em for em in msg.embeds][0]
+                embed.set_footer(text="Deze sessie is afgelopen!")
+                await msg.edit(embed=embed)
+            else:
+                msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
                 await msg.remove_reaction(payload.emoji, payload.member)
-            
-            def check1(m):
-                return m.channel == ctx.channel and m.author == ctx.author
-            
-            def check2(payload):
-                if msg.id == payload.message_id and payload.user_id != 808736566213345281 and "[Moderator]" in role_names and payload.emoji.name == "🛑":
-                    return True
-                else:
-                    self.client.loop.create_task(reactie_verwijderen(payload))
-            await ctx.send("Wat is de naam van je sessie?")
-            sessie_naam = await self.client.wait_for('message', check=check1, timeout=180)
-            await ctx.send("Wanneer gaat de sessie door?")
-            sessie_datum = await self.client.wait_for('message', check=check1, timeout=180)
-            await ctx.send("Een kleine beschrijving van de sessie:")
-            sessie_beschrijving = await self.client.wait_for('message', check=check1, timeout=600)
-            embed = discord.Embed(title=sessie_naam.content, color=discord.Colour.blurple())
-            embed.add_field(name="Datum", value=f"`{sessie_datum.content}`")
-            embed.add_field(name="Beschrijving:", value=f"```{sessie_beschrijving.content}```", inline=False)
-            embed.set_footer(text="Druk op '✅' om mee te doen met de sessie")
-            msg = await self.client.get_channel(832263662566637640).send(embed=embed)
-            await msg.add_reaction("✅")
-            await msg.add_reaction("🛑")
-            await self.client.wait_for("raw_reaction_add", check=check2)
-            embed.set_footer(text="Deze sessie is afgelopen!")
-            await msg.clear_reactions()
-            await msg.edit(embed=embed)
-        else:
-            ticket_channel = self.client.get_channel(788696271720415242)
-            embed = discord.Embed()
-            embed.add_field(name="Helaas...", value=f"{ctx.author.name.split('[')[0]}, zonder de coach role kun je geen sessie maken! Als je toch iets wil doen kun je een ticket aanmaken ({ticket_channel.mention}).")
-            await ctx.send(embed=embed)
+        elif payload.channel_id == 832263662566637640 and payload.emoji.name == "✅" and payload.member.id != 808736566213345281:
+            msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
+            footer = [em for em in msg.embeds][0].to_dict()["footer"]["text"]
+            if footer == "Druk op '✅' om mee te doen met de sessie":
+                sessie_naam = [em for em in msg.embeds][0].to_dict()["title"]
+                guild = self.client.get_guild(payload.guild_id)
+                role = discord.utils.get(guild.roles, name=sessie_naam)
+                await payload.member.add_roles(role)
+                channel = discord.utils.get(self.client.get_guild(payload.guild_id).channels, name=sessie_naam)
+                await channel.send(f"Welkom bij de sessie {payload.member.mention}!")
+                
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        if payload.channel_id == 832263662566637640 and payload.emoji.name == "✅" and payload.user_id != 808736566213345281:
+            msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
+            footer = [em for em in msg.embeds][0].to_dict()["footer"]["text"]
+            if footer == "Druk op '✅' om mee te doen met de sessie":
+                sessie_naam = [em for em in msg.embeds][0].to_dict()["title"]
+                guild = self.client.get_guild(payload.guild_id)
+                role = discord.utils.get(guild.roles, name=sessie_naam)
+                member = await self.client.get_guild(payload.guild_id).fetch_member(payload.user_id)
+                await member.remove_roles(role)
+    
 
+    @commands.command()
+    @commands.has_permissions(manage_channels=True)
+    async def delete(self, ctx):
+        category = discord.utils.get(ctx.guild.categories, id=836860552805482557)
+        if ctx.channel.category == category:
+            naam = ctx.channel.name
+            role = discord.utils.get(ctx.guild.roles, name=naam)
+            channel = ctx.channel
+            await ctx.send(embed=discord.Embed(description=f"De {naam} rol en kanaal worden verwijderd binnen 5 seconden."))
+            await asyncio.sleep(5)
+            await role.delete()
+            await channel.delete()
 
 class Comms(commands.Cog):
     def __init__(self, bot):
-        self.client = bot        
+        self.client = bot
         
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -530,7 +572,7 @@ class Comms(commands.Cog):
                     coach : discord.PermissionOverwrite(view_channel=True)
                 }
                 naam = member.display_name.split(" [")[0]
-                if naam.endswith("s"):    
+                if naam.endswith("s"):
                     channel = await category.create_voice_channel(name=f"{naam}' kanaal", overwrites=overwrites)
                 elif naam.endswith(("a", "e", "i", "o", "u", "y")):
                     channel = await category.create_voice_channel(name=f"{naam}'s kanaal", overwrites=overwrites)
@@ -888,23 +930,25 @@ class SleepingChannels(commands.Cog):
             await self.client.wait_for("raw_reaction_add", check=check_sleep, timeout=60) 
 
 
-@client.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.errors.CommandOnCooldown):
-        seconden = error.retry_after % 60
-        minuten = (error.retry_after - seconden) / 60
-        if minuten == 0:
-             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
-        else:
-             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
-    else:
-         pass
+# @client.event
+# async def on_command_error(ctx, error):
+#     if isinstance(error, commands.errors.CommandOnCooldown):
+#         seconden = error.retry_after % 60
+#         minuten = (error.retry_after - seconden) / 60
+#         if minuten == 0:
+#              await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
+#         else:
+#              await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
+#     elif isinstance(error, commands.MissingRole):
+#         await ctx.send(embed=discord.Embed(description=f"Je mist de {ctx.guild.get_role(error.missing_role).mention} role om dit command te gebruiken!"))
+#     else:
+#          pass
 
 
 client.add_cog(TicketSystem(client))
 client.add_cog(ReactionRoles(client))
 client.add_cog(MainCommands(client))
-# client.add_cog(AndereCommands(client))
+client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
 client.add_cog(HelpCommand(client))
 client.add_cog(SleepingChannels(client))
