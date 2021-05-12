@@ -2,11 +2,11 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
-from PIL import Image, ImageDraw, ImageFont
 import requests
 from bs4 import BeautifulSoup
 from packages import packages
 import random
+import sqlite3
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix=".", intents=intents)
@@ -152,7 +152,7 @@ class ReactionRoles(commands.Cog):
         self.client = bot
         
         roles_programmeren = {"gamedev":"[Game-Dev]", "python" : "[Python]", "3D":"[3D-Modeler]", "maker" :"[Maker]", "java":"[Java-Dev]", "cpp" :"[C]", "webdesign": "[WebDesigner]", "scratch":"[Scratch]"}
-        self.roles_programmeren = roles_programmeren    
+        self.roles_programmeren = roles_programmeren
                    
         roles_lid_jaren = {"🧙\u200d♂️": "[>8 jaar lid]", "🧙": "[6-8 jaar lid]", "🧑\u200d⚖️":"[4-6 jaar lid]", "🧑\u200d🎓":"[2-4 jaar lid]", "🧑\u200d💻":"[1-2 jaar lid]", "🧒": "[<1 jaar lid]", "👤" : "[geen lid]"}
         self.roles_lid_jaren = roles_lid_jaren
@@ -164,7 +164,7 @@ class ReactionRoles(commands.Cog):
         self.roles_computer = roles_computer
     
         roles_os = {"linux":"[Linux User]","windows":"[Windows User]", "Apple":"[Apple User]"}   
-        self.roles_os = roles_os 
+        self.roles_os = roles_os
             
             
     async def max_n_role_toevoegen(self, payload, lijst_role, n):
@@ -215,12 +215,12 @@ class ReactionRoles(commands.Cog):
             
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
+        guild = self.client.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
         if payload.message_id == 830125441335427093:
                 for key in self.roles_programmeren:
                     if key == payload.emoji.name:
-                        guild = self.client.get_guild(payload.guild_id)
                         role = discord.utils.get(guild.roles, name=self.roles_programmeren[key])
-                        member = guild.get_member(payload.user_id)
                         await member.remove_roles(role)
                         break
         elif payload.message_id == 830119299880452116:
@@ -232,7 +232,7 @@ class ReactionRoles(commands.Cog):
         elif payload.message_id == 830123341474037790:
             await self.role_verwijderen(payload, self.roles_os)
         elif payload.message_id == 830127528580612107:
-            role = discord.utils.get(self.client.get_guild(payload.guild_id).roles, id=790285278858182686)
+            role = discord.utils.get(guild.roles, id=790285278858182686)
             await member.remove_roles(role)
 
 
@@ -352,20 +352,12 @@ class MainCommands(commands.Cog):
 
         # welkom bericht in kanaal
         welkom_kanaal = self.client.get_channel(806505967390162944)
-        welkom_image = Image.open("welkom.png")
-
-        draw = ImageDraw.Draw(welkom_image)
-        lettertype = ImageFont.truetype("VAG_rounded_Light.ttf", 73)
-
-        draw.text((395, 15), f"{member.name}!", fill=(255, 255, 255), font=lettertype)
         
-        welkom_image.save(f"{member.name}_welkom.png")
-        
-        await welkom_kanaal.send(file=discord.File(f"{member.name}_welkom.png"))
-        
-        os.remove(f"{member.name}_welkom.png")
-          
-
+        with open("welkom_message.txt", "r") as f:
+            lines = f.readlines()
+            new_lines = [line.rstrip("\n") for line in lines]
+            random_line = random.choice(new_lines)
+            await welkom_kanaal.send(embed=discord.Embed(description=random_line.replace("@...", member.mention)))
 
 
 class AndereCommands(commands.Cog):
@@ -495,14 +487,19 @@ class AndereCommands(commands.Cog):
         await msg.add_reaction("✅")
         await msg.add_reaction("🛑")
         perms = discord.Permissions(3264065)
-        role = await ctx.guild.create_role(name=sessie_naam.content, permissions=perms, colour=discord.Color.from_rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), hoist=False, mentionable=True)
+        role = await ctx.guild.create_role(name=sessie_naam.content.lower(), permissions=perms, colour=discord.Color.from_rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)), hoist=False, mentionable=True)
         category = discord.utils.get(ctx.guild.categories, id=836860552805482557)
         overwrites = {
             role: discord.PermissionOverwrite(view_channel=True),
             ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False)
         }
-        await ctx.guild.create_text_channel(name=sessie_naam.content, overwrites=overwrites, category=category)
-    
+        channel = await ctx.guild.create_text_channel(name=sessie_naam.content, overwrites=overwrites, category=category)
+        conn = sqlite3.connect("CoderDojoDatabase.db")
+        c = conn.cursor()
+        c.execute("INSERT INTO sessie VALUES (?, ?, ?)", (msg.id, channel.id, role.id))
+        conn.commit()
+        conn.close()
+         
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.channel_id == 832263662566637640 and payload.emoji.name == "🛑":
@@ -512,31 +509,38 @@ class AndereCommands(commands.Cog):
                 embed = [em for em in msg.embeds][0]
                 embed.set_footer(text="Deze sessie is afgelopen!")
                 await msg.edit(embed=embed)
+                await msg.clear_reactions()
             else:
                 msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
                 await msg.remove_reaction(payload.emoji, payload.member)
         elif payload.channel_id == 832263662566637640 and payload.emoji.name == "✅" and payload.member.id != 808736566213345281:
             msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
-            footer = [em for em in msg.embeds][0].to_dict()["footer"]["text"]
-            if footer == "Druk op '✅' om mee te doen met de sessie":
+            conn = sqlite3.connect("CoderDojoDatabase.db")
+            c = conn.cursor()
+            c.execute("SELECT * FROM sessie WHERE msg_id = (?)", (msg.id,))
+            data = c.fetchall()
+            print(f"Toevoegen: {data}")
+            for msg_id, channel_id, role_id in data:
                 sessie_naam = [em for em in msg.embeds][0].to_dict()["title"]
                 guild = self.client.get_guild(payload.guild_id)
-                role = discord.utils.get(guild.roles, name=sessie_naam)
+                role = discord.utils.get(guild.roles, id=role_id)
                 await payload.member.add_roles(role)
-                channel = discord.utils.get(self.client.get_guild(payload.guild_id).channels, name=sessie_naam)
-                await channel.send(f"Welkom bij de sessie {payload.member.mention}!")
+                await self.client.get_channel(channel_id).send(f"Welkom bij de sessie {payload.member.mention}!")
                 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if payload.channel_id == 832263662566637640 and payload.emoji.name == "✅" and payload.user_id != 808736566213345281:
-            msg = await self.client.get_channel(832263662566637640).fetch_message(payload.message_id)
-            footer = [em for em in msg.embeds][0].to_dict()["footer"]["text"]
-            if footer == "Druk op '✅' om mee te doen met de sessie":
-                sessie_naam = [em for em in msg.embeds][0].to_dict()["title"]
+        if payload.channel_id == 832263662566637640 and payload.emoji.name == "✅" and payload.user_id != 808736566213345281: 
+            conn = sqlite3.connect("CoderDojoDatabase.db")
+            c = conn.cursor()
+            c.execute("SELECT * FROM sessie WHERE msg_id = (?)", (payload.message_id,))
+            data = c.fetchall()
+            print(f"Verwijderen: {data}")
+            for msg_id, channel_id, role_id in data:
                 guild = self.client.get_guild(payload.guild_id)
-                role = discord.utils.get(guild.roles, name=sessie_naam)
+                role = discord.utils.get(guild.roles, id=role_id)
                 member = await self.client.get_guild(payload.guild_id).fetch_member(payload.user_id)
                 await member.remove_roles(role)
+            conn.close()
     
 
     @commands.command()
@@ -544,13 +548,20 @@ class AndereCommands(commands.Cog):
     async def delete(self, ctx):
         category = discord.utils.get(ctx.guild.categories, id=836860552805482557)
         if ctx.channel.category == category:
-            naam = ctx.channel.name
-            role = discord.utils.get(ctx.guild.roles, name=naam)
             channel = ctx.channel
-            await ctx.send(embed=discord.Embed(description=f"De {naam} rol en kanaal worden verwijderd binnen 5 seconden."))
+            conn = sqlite3.connect("CoderDojoDatabase.db")
+            c = conn.cursor()
+            c.execute("SELECT * FROM sessie WHERE channel_id = (?)", (channel.id,))
+            data = c.fetchone()
+            print(f"DELETEN: {data}")
+            role = discord.utils.get(ctx.guild.roles, id=data[2])
+            await ctx.send(embed=discord.Embed(description=f"{role.mention} en {channel.mention} worden verwijderd binnen 5 seconden!"))
             await asyncio.sleep(5)
             await role.delete()
             await channel.delete()
+            c.execute("DELETE FROM sessie WHERE channel_id = (?)", (channel.id,))
+            conn.commit()
+            conn.close()
 
 class Comms(commands.Cog):
     def __init__(self, bot):
@@ -587,6 +598,11 @@ class Comms(commands.Cog):
 class HelpCommand(commands.Cog):
     def __init__(self, bot):
         self.client = bot
+        
+    async def embeds(self, ctx, name, value):
+        em = discord.Embed(color=ctx.author.color)
+        em.add_field(name=name, value=value)
+        await ctx.send(embed=em)
 
     @commands.group(invoke_without_command=True)
     async def help(self, ctx):
@@ -607,31 +623,31 @@ class HelpCommand(commands.Cog):
 
     @help.command()
     async def role(self, ctx):
-        em = embeds(ctx, "Role", "Weergeeft online en offline members van een bepaalde role")
+        em = self.embeds(ctx, "Role", "Weergeeft online en offline members van een bepaalde role")
         em.add_field(name="Mogelijke rollen", value="python (py), scratch, webdesigner (web), java-dev (java), 3D-Modelers (3D), maker, game-dev (game), c (++) (#), modontrail (mod-), moderator (mod), coach, ninja", inline=False)
         await ctx.send(embed=em)
         
     @help.command()
     async def bug(self, ctx):
-        em = embeds(ctx, "Bug", "Wat moet je doen als je een bug vindt?")
+        em = self.embeds(ctx, "Bug", "Wat moet je doen als je een bug vindt?")
         await ctx.send(embed=em)
         
         
     @help.command()
     async def github(self, ctx):
-        em = embeds(ctx, "Github", "Github pagina van de source code van CoderDojo Discord bot.")
+        em = self.embeds(ctx, "Github", "Github pagina van de source code van CoderDojo Discord bot.")
         await ctx.send(embed=em)
 
 
     @help.command(aliases=["latencie", "vertraging", "delay", "latency"])
     async def ping(self, ctx):
-        em = embeds(ctx, "Ping", "Weergeeft de bots ping (vertraging van de bot).")
+        em = self.embeds(ctx, "Ping", "Weergeeft de bots ping (vertraging van de bot).")
         em.add_field(name="Aliassen", value=".ping, .latencie, .vertraging, .delay, .latency", inline=False)
         await ctx.send(embed=em)
         
     @help.command(aliases=["members", "membercount", "member"])
     async def member_count(self, ctx):
-        em = embeds(ctx, "Membercount", "Weergeeft het aantal bots en members.")
+        em = self.embeds(ctx, "Membercount", "Weergeeft het aantal bots en members.")
         em.add_field(name="Aliassen", value=".member_count, .membercount, .members, .member", inline=False)
         await ctx.send(embed=em)
 
@@ -646,7 +662,7 @@ class HelpCommand(commands.Cog):
 
     @modhelp.command()
     async def create(self, ctx):
-        embed = embeds(ctx, ".create <naam dojo>", "Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role")
+        embed = self.embeds(ctx, ".create <naam dojo>", "Maakt een voice- en tekstkanaal aan in de categorie dojo's en een toebehorende role")
         await ctx.send(embed=embed)
 
 
@@ -930,19 +946,19 @@ class SleepingChannels(commands.Cog):
             await self.client.wait_for("raw_reaction_add", check=check_sleep, timeout=60) 
 
 
-# @client.event
-# async def on_command_error(ctx, error):
-#     if isinstance(error, commands.errors.CommandOnCooldown):
-#         seconden = error.retry_after % 60
-#         minuten = (error.retry_after - seconden) / 60
-#         if minuten == 0:
-#              await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
-#         else:
-#              await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
-#     elif isinstance(error, commands.MissingRole):
-#         await ctx.send(embed=discord.Embed(description=f"Je mist de {ctx.guild.get_role(error.missing_role).mention} role om dit command te gebruiken!"))
-#     else:
-#          pass
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.errors.CommandOnCooldown):
+        seconden = error.retry_after % 60
+        minuten = (error.retry_after - seconden) / 60
+        if minuten == 0:
+             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(seconden, 1)}` om dit command te gebruiken in dit kanaal!"))
+        else:
+             await ctx.send(embed=discord.Embed(description=f"Wacht nog `{round(minuten)} min en {round(seconden, 1)}s` om dit command te gebruiken in dit kanaal!"))
+    elif isinstance(error, commands.MissingRole):
+        await ctx.send(embed=discord.Embed(description=f"Je mist de {ctx.guild.get_role(error.missing_role).mention} role om dit command te gebruiken!"))
+    else:
+         pass
 
 
 client.add_cog(TicketSystem(client))
