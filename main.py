@@ -20,6 +20,15 @@ async def on_ready():
     print(f"{client.user.name} is running...")
     discord.Activity(type=discord.ActivityType.watching, name=".help")
 
+# Command loader
+for root, subFolder, files in os.walk(f'./commands'):
+    for item in files:
+        if item.endswith('.py'):
+            file_path = str(os.path.join(root,item))
+            file_path = file_path.replace("\\", ".")
+            client.load_extension(file_path[2:-3])
+            print("loaded command: ",item)
+        
 
 class TicketSystem(commands.Cog):
     def __init__(self, bot):
@@ -248,27 +257,7 @@ class MainCommands(commands.Cog):
         em.add_field(name=name, value=value)
         await ctx.send(embed=em)
         
-    async def lijst_online_members(self, ctx, naam_role):
-        lijst_role = [member for member in ctx.guild.members if naam_role in [role.name for role in member.roles]]
-        lijst_online = [member.display_name.split(" [")[0] for member in lijst_role if str(member.status) != "offline"]
-        lijst_offline = [member.display_name.split(" [")[0] for member in lijst_role if str(member.status) == "offline"]
-        if not lijst_online:
-            members_online = "/"
-        else:
-            members_online = ", ".join(lijst_online)
-        if not lijst_offline:
-            members_offline = "/"
-        else:
-            members_offline = ", ".join(lijst_offline)
-        if not lijst_offline and not lijst_online:
-            await self.embeds(ctx, f"{naam_role}", "Niemand heeft deze role")
-        else:
-            await self.embeds(ctx, f"{naam_role} ({len(lijst_offline) + len(lijst_online)})", f"**Online ({len(lijst_online)}):** {members_online}\n**Offline ({len(lijst_offline)}):** {members_offline}")
 
-
-    @commands.command(aliases=["latencie", "vertraging", "delay", "latency"])
-    async def ping(self, ctx):
-        await self.embeds(ctx, "Ping", f"The delay of the bot is: **{round(self.client.latency * 1000)}ms**.")
 
     @commands.command()
     async def github(self, ctx):
@@ -458,18 +447,6 @@ class AndereCommands(commands.Cog):
             embed.add_field(name="Command uitgevoerd, maar...", value="Iedereen heeft al een toepasselijke role (ninja, coach)")
         else:    
             embed.add_field(name="Command succesvol uitgevoerd", value=f"Volgende member(s) kregen de role [Ninja]: \n `{bericht_members}`")
-        await ctx.send(embed=embed)
-        
-        
-    @commands.command(aliases=["membercount", "members", "member", "leden"])
-    async def member_count(self, ctx):
-        online_bots = len([str(member.status) for member in ctx.guild.members if member.bot and str(member.status) != 'offline'])
-        offline_bots = len([str(member.status) for member in ctx.guild.members if member.bot and str(member.status) == 'offline'])
-        verified_members = len([member.name for member in ctx.guild.members if "[Coach]" in [role.name for role in member.roles] or "[Ninja]" in [role.name for role in member.roles]])
-        unverified_members = len(ctx.guild.members) - online_bots - offline_bots - verified_members
-        embed = discord.Embed(color=ctx.author.color)
-        embed.add_field(name=f"Members ({verified_members + unverified_members}):", value=f"```Geveerifeerd: {verified_members}```\n```Niet geveerifeerd: {unverified_members}```")
-        embed.add_field(name=f"Bots ({online_bots + offline_bots}):", value=f"```Online bots: {online_bots}```\n```Offline bots: {offline_bots}```")
         await ctx.send(embed=embed)
     
     @commands.command()
@@ -989,8 +966,8 @@ client.add_cog(ReactionRoles(client))
 client.add_cog(MainCommands(client))
 client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
-client.add_cog(HelpCommand(client))
+#client.add_cog(HelpCommand(client))
 client.add_cog(SleepingChannels(client))
 client.add_cog(WebScraping(client))
 
-client.run("token")
+client.run("ODQ0ODAwMzQ3ODM3OTU2MTI3.YKXrog.KSXE9qe7Is7MO29xZdt7u2D6aNI")
