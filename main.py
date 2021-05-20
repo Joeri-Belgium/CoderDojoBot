@@ -970,4 +970,4 @@ client.add_cog(Comms(client))
 client.add_cog(SleepingChannels(client))
 client.add_cog(WebScraping(client))
 
-client.run("ODQ0ODAwMzQ3ODM3OTU2MTI3.YKXrog.KSXE9qe7Is7MO29xZdt7u2D6aNI")
+client.run("")
