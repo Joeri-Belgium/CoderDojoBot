@@ -248,115 +248,6 @@ class ReactionRoles(commands.Cog):
             await member.remove_roles(role)
 
 
-class MainCommands(commands.Cog):
-    def __init__(self, bot):
-        self.client = bot
-        
-    async def embeds(self, ctx, name, value):
-        em = discord.Embed(color=ctx.author.color)
-        em.add_field(name=name, value=value)
-        await ctx.send(embed=em)
-        
-
-
-    @commands.command()
-    async def github(self, ctx):
-        await self.embeds(ctx, "Github", "De code van de CoderDojo Discord is terug te vinden op: https://github.com/beastmatser3/CoderDojoBot")
-
-    @commands.command()
-    async def bug(self, ctx):
-        await self.embeds(ctx, "Bug gevonden?", "Stuur een bericht naar beastmatser#0728 om de bug te reporten.")
-
-    @commands.command(aliases=["py"])
-    async def python(self, ctx):
-        await self.lijst_online_members(ctx, "[Python]")
-
-
-    @commands.command(aliases=[])
-    async def scratch(self, ctx):
-        await self.lijst_online_members(ctx, "[Scratch]")
-
-
-    @commands.command(aliases=["web", "webdesign"])
-    async def webdesigner(self, ctx):
-        await self.lijst_online_members(ctx, "[WebDesigner]")
-
-
-    @commands.command(aliases=["javadev", "java-dev", "js"])
-    async def java(self, ctx):
-        await self.lijst_online_members(ctx, "[Java-Dev]")
-
-
-    @commands.command(aliases=["3D", "3d", "3D-Modelers", "3D-Modeler", "3D-modeler", "3D-modelers"])
-    async def d3(self, ctx):
-        await self.lijst_online_members(ctx, "[3D-Modeler]")
-
-
-    @commands.command(aliases=["makers"])
-    async def maker(self, ctx):
-        await self.lijst_online_members(ctx, "[Maker]")
-
-
-    @commands.command(aliases=["game-dev", "gamedev", "game"])
-    async def game_dev(self, ctx):
-        await self.lijst_online_members(ctx, "[Game-Dev]")
-
-
-    @commands.command(aliases=["c++", "c#"])
-    async def c(self, ctx):
-        await self.lijst_online_members(ctx, "[C]")
-
-
-    @commands.command(aliases=["modsontrail"])
-    async def modontrail(self, ctx):
-        await self.lijst_online_members(ctx, "[Moderator On Trial]")
-
-
-    @commands.command(aliases=["mods", "moderator", "moderators", "mod-"])
-    async def mod(self, ctx):
-        await self.lijst_online_members(ctx, "[Moderator]")
-
-
-    @commands.command(aliases=["coaches"])
-    async def coach(self, ctx):
-        await self.lijst_online_members(ctx, "[Coach]")
-
-
-    @commands.command(aliases=["ninjas"])
-    async def ninja(self, ctx):
-        await self.lijst_online_members(ctx, "[Ninja]")
-        
-    @commands.command(aliases=["admins"])
-    async def admin(self, ctx):
-        await self.lijst_online_members(ctx, "[Admin]")
-        
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        # welkom  bericht naar user
-        introductie = self.client.get_channel(829633531579203595)
-        regels = self.client.get_channel(790536868236099604)
-        hoe_discord_gebruiken = self.client.get_channel(788694027359748106)
-        maak_ticket_channel = self.client.get_channel(788696271720415242)
-        
-        embed = discord.Embed(title="**Welkom**", description=f"Welkom bij de **CoderDojo Discord** server, {member.name}! Dit is de plek waar je jouw vragen kunt stellen over code gerelateerde zaken!\n\nOm van start te gaan moet je even een korte **vragenlijst** invullen in {introductie.mention}, zo komen we een beetje meer te weten over jouw kennen en kunnen.\n\nDe **regels** van de server moeten ten alle tijden worden gevolgd, deze regels kan je terugvinden in {regels.mention}.\n\nWe zouden ook heel graag hebben dat iedereen herkenbaar is, daarom zouden we je willen vragen om je **nickname**  te veranderen naar je voornaam gevolgd door de stad van jouw dojo tussen vierkante haakjes. Dit ziet er dan bv. zo uit: `Bart [Antwerpen]`. Heb je geen dojo kan je `Bart [Geen dojo]` neerplaatsen.\n\nAls je niet weet hoe dit moet of je begrijpt niet helemaal hoe Discord werkt staat er in {hoe_discord_gebruiken.mention} een **tutorial** die je kan bekijken.\n\nHeb je hulp nodig in verband met de Discord server, wil je feedback geven, een suggestie doen of iets melden over een bepaalde persoon? Je kan altijd een **ticket** aanmaken in {maak_ticket_channel.mention} en dan zal je zo snel mogelijk hulp krijgen.")
-        embed.set_footer(text="Dit is een geautomatiseerd bericht, antwoorden worden niet gelezen.")
-        await member.send(embed=embed)
-
-        # welkom bericht in kanaal
-        welkom_kanaal = self.client.get_channel(806505967390162944)
-        welkom_image = Image.open("welkom.png")
-
-        draw = ImageDraw.Draw(welkom_image)
-        lettertype = ImageFont.truetype("VAG_rounded_Light.ttf", 73)
-
-        draw.text((395, 15), f"{member.name}!", fill=(255, 255, 255), font=lettertype)
-
-        welkom_image.save(f"{member.name}_welkom.png")
-
-        await welkom_kanaal.send(file=discord.File(f"{member.name}_welkom.png"))
-
-        os.remove(f"{member.name}_welkom.png")
-
 class AndereCommands(commands.Cog):
     def __init__(self, bot):
         self.client = bot
@@ -963,11 +854,10 @@ class SleepingChannels(commands.Cog):
 
 client.add_cog(TicketSystem(client))
 client.add_cog(ReactionRoles(client))
-client.add_cog(MainCommands(client))
 client.add_cog(AndereCommands(client))
 client.add_cog(Comms(client))
 #client.add_cog(HelpCommand(client))
 client.add_cog(SleepingChannels(client))
 client.add_cog(WebScraping(client))
 
-client.run("")
+client.run("ODQ0ODAwMzQ3ODM3OTU2MTI3.YKXrog.CrOrjf6Ih358yeCx4C0uvQEnYvk")

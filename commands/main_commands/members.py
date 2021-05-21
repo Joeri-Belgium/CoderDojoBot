@@ -28,7 +28,7 @@ class Members(commands.Cog):
             else:
                 await self.embeds(ctx, f"{naam_role} ({len(lijst_offline) + len(lijst_online)})", f"**Online ({len(lijst_online)}):** {members_online}\n**Offline ({len(lijst_offline)}):** {members_offline}")
 
-    @commands.command(aliases=["members2","leden","whoisonline"])
+    @commands.command(aliases=["leden","whoisonline"])
     async def members(self, ctx, role = None):
         if not role == None:
          await self.lijst_online_members(ctx, role)

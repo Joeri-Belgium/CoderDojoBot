@@ -15,9 +15,13 @@ class Help(commands.Cog):
     async def help(self, ctx, arg1):
         for command in self.client.walk_commands():
             if hasattr(command, 'description'):
-                print(command.name)
                 if command.name == arg1:
                   await self.embeds(ctx, command,command.description)
+                else: 
+                    for alias in command.aliases:
+                         if alias == arg1:
+                            await self.embeds(ctx, alias,command.description)
+
 
 def setup(client):
     client.add_cog(Help(client))

@@ -5,8 +5,6 @@ class Ping(commands.Cog):
 
     def __init__(self,client):
         self.client = client
-        self.client.__names__ = 'ping'
-        self.description = "Weergeeft de bots ping (vertraging van de bot)."
 
     async def embeds(self, ctx, name, value):
         em = discord.Embed(color=ctx.author.color)
