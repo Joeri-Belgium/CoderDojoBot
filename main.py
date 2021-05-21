@@ -860,4 +860,4 @@ client.add_cog(Comms(client))
 client.add_cog(SleepingChannels(client))
 client.add_cog(WebScraping(client))
 
-client.run("ODQ0ODAwMzQ3ODM3OTU2MTI3.YKXrog.CrOrjf6Ih358yeCx4C0uvQEnYvk")
+client.run("TOKEN")
